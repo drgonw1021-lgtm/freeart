@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: 构建前端
+        run: npm run build
+
+      - name: 引擎接口 + 引擎面板
+        run: node e2e-engine.mjs
+        env:
+          SKIP_UI: '1'
+
+      - name: 画笔 / 图生图 / 局部重绘 / 随心改（假引擎）
+        run: node e2e-paint.mjs
+        env:
+          CHROME: /usr/bin/google-chrome
+
+      - name: 服务健康
+        run: |
+          node server.js & sleep 4
+          curl -fsS http://localhost:3000/api/health
+          curl -fsS http://localhost:3000/api/engine/status

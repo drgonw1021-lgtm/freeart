@@ -1,0 +1,53 @@
+name: 报个 Bug
+description: 哪里不对劲
+labels: ['bug']
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 越具体越好
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 怎么复现
+      placeholder: |
+        1. 导入一张图
+        2. 点「xxx」
+        3. 出现 xxx
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 出问题的部分
+      options:
+        - 画布 / 导入 / 导出
+        - 本地改图（不需要模型的那部分）
+        - 云端生图
+        - 本地引擎（安装 / 启动 / 出图）
+        - 画笔 / 蒙版 / 局部重绘
+        - 随心改（意图 → 工作流）
+        - 品牌 / 技能
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      placeholder: Windows 11 / Node 20.11 / Chrome 131 / RTX 3050 4GB
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图
+      description: 有报错信息或截图最有帮助
+      render: text

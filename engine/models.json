@@ -1,0 +1,48 @@
+{
+  "_comment": "FREEART 一键可装的推荐模型。urls 按顺序尝试，安装器会先挑一个能连上的源。想用别的模型，直接丢进对应目录即可，FREEART 会自动识别。",
+  "models": [
+    {
+      "id": "sd15",
+      "label": "Stable Diffusion 1.5",
+      "desc": "图生图 / 局部重绘 / 扩图 / 随心改 的基础模型。4GB 显存（GTX/RTX 3050 级别）即可流畅运行",
+      "dir": "models/checkpoints",
+      "file": "v1-5-pruned-emaonly.safetensors",
+      "bytes": 4265388832,
+      "size": "4.0 GB",
+      "core": true,
+      "urls": [
+        "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors",
+        "https://hf-mirror.com/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors"
+      ]
+    },
+    {
+      "id": "sd15-inpaint",
+      "label": "SD1.5 Inpainting",
+      "desc": "专用局部重绘权重，擦除和换物体的接缝更干净。不装也能重绘，只是边缘略糙",
+      "dir": "models/checkpoints",
+      "file": "sd-v1-5-inpainting.ckpt",
+      "bytes": 4258145083,
+      "size": "4.0 GB",
+      "core": false,
+      "urls": [
+        "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/sd-v1-5-inpainting.ckpt",
+        "https://hf-mirror.com/runwayml/stable-diffusion-v1-5/resolve/main/sd-v1-5-inpainting.ckpt"
+      ]
+    },
+    {
+      "id": "realesrgan-x2",
+      "label": "RealESRGAN x2+",
+      "desc": "AI 超分模型。装上后「放大」走真正的超分，不装则自动降级为「放大 + 轻度重绘补细节」",
+      "dir": "models/upscale_models",
+      "file": "RealESRGAN_x2plus.pth",
+      "bytes": 64000000,
+      "size": "64 MB",
+      "core": false,
+      "urls": [
+        "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
+        "https://hf-mirror.com/ai-forever/Real-ESRGAN/resolve/main/RealESRGAN_x2.pth",
+        "https://gh-proxy.com/https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth"
+      ]
+    }
+  ]
+}

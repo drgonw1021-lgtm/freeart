@@ -1,0 +1,31 @@
+name: 提个想法
+description: 想要什么能力
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: 想要什么
+      description: 用一句话描述你希望的效果
+    validations:
+      required: true
+
+  - type: textarea
+    id: scene
+    attributes:
+      label: 什么场景下会用到
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cost
+    attributes:
+      label: 它应该属于哪一层
+      options:
+        - 本地像素流水线（不需要模型，毫秒级）
+        - 本地引擎（需要 GPU，工作流模板）
+        - 云端生图
+        - 画布 / 交互
+        - 说不好
+    validations:
+      required: true

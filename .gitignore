@@ -1,0 +1,25 @@
+node_modules/
+web/
+dist/
+
+# 运行时产物
+data/
+*.log
+
+# 本机配置（含个人路径/密钥），仓库里留的是 config.example.json
+config.json
+
+# 一键安装下来的引擎本体与工具（体积以 GB 计）
+engine/ComfyUI/
+engine/.tools/
+engine/.staging/
+*.part
+
+# e2e 用到的大图（40MB，缺了会自动生成）与截图产物
+fixtures/big.jpg
+.shots/
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
