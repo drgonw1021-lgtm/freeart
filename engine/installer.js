@@ -225,22 +225,21 @@ async function ensureUv(toolsDir, onLog, signal) {
   })();
   fs.mkdirSync(toolsDir, { recursive: true });
   onLog?.('info', '本机没有合适的 Python，改用 uv 自动准备（约 20MB）…');
-  let got = null;
-  for (const raw of [
+  const candidates = [
     `https://github.com/astral-sh/uv/releases/latest/download/uv-${plat}.zip`,
     `https://gh-proxy.com/https://github.com/astral-sh/uv/releases/latest/download/uv-${plat}.zip`,
     `https://github.com/astral-sh/uv/releases/latest/download/uv-${plat}.tar.gz`,
     `https://gh-proxy.com/https://github.com/astral-sh/uv/releases/latest/download/uv-${plat}.tar.gz`,
-  ]) {
-    const ext = raw.endsWith('.zip') ? '.zip' : '.tar.gz';
-    const p = path.join(toolsDir, 'uv' + ext);
-    try {
-      await downloadFile([raw], p, { onLog, label: 'uv', bytes: 20 * 1024 * 1024, signal });
-      got = p;
-      break;
-    } catch (e) { /* 换下一个源 */ }
+  ];
+  // 先探一下哪个源能连上，省得在死链上干等超时
+  const fast = await probe(candidates, { timeout: 10000 });
+  const url = fast.ok ? fast.url : candidates[1];
+  const got = path.join(toolsDir, url.endsWith('.zip') ? 'uv.zip' : 'uv.tar.gz');
+  try {
+    await downloadFile([url, ...candidates], got, { onLog, label: 'uv', bytes: 20 * 1024 * 1024, signal });
+  } catch (e) {
+    throw new Error('uv 下载失败。请手动装 Python 3.11（https://www.python.org/downloads/）后重试');
   }
-  if (!got) throw new Error('uv 下载失败。请手动安装 Python 3.11（https://www.python.org/downloads/）后重试');
   await extract(got, toolsDir, onLog);
   fs.rmSync(got, { force: true });
   if (!fs.existsSync(existing)) throw new Error('uv 解压后未找到可执行文件');
@@ -275,8 +274,11 @@ export async function installEngine(o) {
   } else {
     onLog?.('info', '下载 ComfyUI 源码…');
     const zip = path.join(dir, 'comfy.zip');
+    // 先挑一个连得上的源，再交给断点续传
+    const pick = await probe(COMFY_ZIPS, { timeout: 10000 });
+    const zipUrls = pick.ok ? [pick.url, ...COMFY_ZIPS] : COMFY_ZIPS;
     try {
-      await downloadFile(COMFY_ZIPS, zip, { onLog, label: 'ComfyUI 源码', bytes: 8 * 1024 * 1024, signal, register });
+      await downloadFile(zipUrls, zip, { onLog, label: 'ComfyUI 源码', bytes: 13 * 1024 * 1024, signal });
     } catch (e) {
       if (signal?.aborted) throw new Error('已取消安装');
       throw e;

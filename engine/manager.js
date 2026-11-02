@@ -18,7 +18,8 @@ export class EngineManager extends EventEmitter {
     this.getConfig = getConfig;
     this.saveConfig = saveConfig;
     this.logs = [];
-    this.child = null;
+    this.child = null;   // 引擎进程
+    this.proc = null;    // 安装过程中的子进程（pip / venv）
     this.abort = null;
     this.phase = 'idle';       // idle | installing | starting | running | stopped | error
     this.lastError = '';
@@ -138,6 +139,7 @@ export class EngineManager extends EventEmitter {
           gpu: this.gpu,
           signal: this.abort.signal,
           onLog: (level, msg) => this.log(level, msg),
+          register: (child) => { this.proc = child; },
         });
 
         this.saveConfig?.({ COMFY_PATH: this.bundled });
@@ -153,6 +155,7 @@ export class EngineManager extends EventEmitter {
         this.phase = 'error';
       } finally {
         this.abort = null;
+        this.proc = null;
         this.installTask = null;
       }
     })();
@@ -162,6 +165,9 @@ export class EngineManager extends EventEmitter {
   cancelInstall() {
     if (this.phase !== 'installing') return { ok: false };
     this.abort?.abort();
+    // 下载是中断流，pip / venv 这类子进程得直接杀掉
+    try { this.proc?.kill(); } catch (e) { /* 已经退出了 */ }
+    this.proc = null;
     return { ok: true };
   }
 
