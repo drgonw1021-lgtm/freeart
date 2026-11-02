@@ -142,7 +142,14 @@ async function genFal(prompt, size, key) {
 
 // ---------- 本地引擎（内置 ComfyUI）----------
 // 引擎默认住在 <项目>/engine/ComfyUI，也可以指向已有的 ComfyUI 目录
-const engine = new EngineManager({
+// 云端部署（CLOUD=1）没有显卡，引擎相关接口一律只读，前端也会自动隐藏入口
+const CLOUD = !!(process.env.CLOUD || config.CLOUD);
+const CLOUD_ENGINE = {
+  cloud: true, phase: 'idle', installed: false, hasVenv: false, online: false,
+  external: false, dir: '', url: '', checkpoints: [], upscalers: [], vram: null,
+  gpu: null, progress: null, lastError: '', logs: [], catalog: [], missingModels: [],
+};
+const engine = CLOUD ? null : new EngineManager({
   root: __dirname,
   config,
   getConfig: () => config,
@@ -150,12 +157,14 @@ const engine = new EngineManager({
 });
 
 app.get('/api/engine/status', async (req, res) => {
+  if (CLOUD) return res.json(CLOUD_ENGINE);
   try { res.json(await engine.status()); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/engine/logs', (req, res) => res.json({ logs: engine.logs.slice(-200) }));
+app.get('/api/engine/logs', (req, res) => res.json({ logs: CLOUD ? [] : engine.logs.slice(-200), cloud: CLOUD }));
 
 app.get('/api/engine/stream', (req, res) => {
+  if (CLOUD) { res.status(204).end(); return; }
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache, no-transform',
@@ -180,22 +189,24 @@ app.get('/api/engine/stream', (req, res) => {
 });
 
 app.post('/api/engine/install', (req, res) => {
+  if (CLOUD) return res.json({ started: false, cloud: true });
   const { models } = req.body || {};
   const r = engine.install({ models });
   if (!r.started) return res.status(409).json(r);
   res.json(r);
 });
 
-app.post('/api/engine/cancel', (req, res) => res.json(engine.cancelInstall()));
+app.post('/api/engine/cancel', (req, res) => res.json(CLOUD ? { ok: false, cloud: true } : engine.cancelInstall()));
 
 app.post('/api/engine/start', (req, res) => {
+  if (CLOUD) return res.json({ started: false, cloud: true });
   engine.start().then((r) => {
     if (!r.ok && r.error) engine.log('err', r.error);
   }).catch((e) => engine.log('err', e.message));
   res.json({ started: true });
 });
 
-app.post('/api/engine/stop', async (req, res) => res.json(await engine.stop()));
+app.post('/api/engine/stop', async (req, res) => res.json(CLOUD ? { ok: false, cloud: true } : await engine.stop()));
 
 // ---------- Provider: ComfyUI（本机 GPU，免费无限）+ 自动工作流规划 ----------
 // 底层与工作流模板已拆到 comfyApi.js / comfyWorkflows.js / planner.js
@@ -340,6 +351,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     provider,
+    cloud: CLOUD,
     free: provider === 'pollinations',
     hint:
       provider === 'pollinations'
@@ -375,7 +387,7 @@ app.listen(PORT, () => {
   console.log(`FREEART → http://localhost:${PORT}`);
   console.log(`图像通道: ${p}${p === 'pollinations' ? '（免费，无需 key）' : ''}`);
 
-  if (config.ENGINE_AUTOSTART !== false) {
+  if (!CLOUD && config.ENGINE_AUTOSTART !== false) {
     (async () => {
       try {
         const s = await engine.status();

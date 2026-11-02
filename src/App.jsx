@@ -732,6 +732,7 @@ export default function App() {
   };
 
   const selected = nodes.find((n) => n.id === selectedId);
+  const cloud = !!health?.cloud;
   const engineDot = engine?.online ? '#3B6D11'
     : (engine?.phase === 'installing' || engine?.phase === 'starting') ? '#BA7517'
       : engine?.installed ? '#8A5A16' : '#B4B2A9';
@@ -784,14 +785,16 @@ export default function App() {
             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: brand.colors[0], marginRight: 4 }} />
             品牌
           </span>
-          <span
-            data-testid="engine-btn"
-            onClick={() => setEngineOpen((v) => !v)}
-            style={{ cursor: 'pointer', color: engineOpen ? '#534AB7' : '#5F5E5A', fontWeight: engineOpen ? 600 : 400, whiteSpace: 'nowrap' }}
-          >
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: engineDot, marginRight: 4 }} />
-            引擎
-          </span>
+          {!cloud && (
+            <span
+              data-testid="engine-btn"
+              onClick={() => setEngineOpen((v) => !v)}
+              style={{ cursor: 'pointer', color: engineOpen ? '#534AB7' : '#5F5E5A', fontWeight: engineOpen ? 600 : 400, whiteSpace: 'nowrap' }}
+            >
+              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: engineDot, marginRight: 4 }} />
+              引擎
+            </span>
+          )}
           <span onClick={exportCanvas} style={{ cursor: 'pointer', color: '#185FA5', whiteSpace: 'nowrap' }}>导出 PNG</span>
           <span onClick={clearAll} style={{ cursor: 'pointer', color: '#A32D2D', whiteSpace: 'nowrap' }}>清空</span>
           <input
@@ -971,9 +974,10 @@ export default function App() {
                 {!engine ? '检测引擎中…'
                   : engine.phase === 'installing' ? '正在安装（可以关掉面板，装完会自动启动）'
                     : engine.phase === 'starting' ? '正在启动，首次要加载模型…'
-                      : engine.online ? `运行中 · ${engine.checkpoints.length} 个底模${engine.vram ? ` · ${engine.vram.name}` : ''}`
-                        : engine.installed ? '已安装，没在运行'
-                          : '未安装'}
+                      : engine.online && engine.installed ? `运行中 · ${engine.checkpoints.length} 个底模${engine.vram ? ` · ${engine.vram.name}` : ''}`
+                        : engine.online ? `已有引擎在 ${(engine.url || '').replace(/^https?:\/\//, '')} 运行`
+                          : engine.installed ? '已安装，没在运行'
+                            : '未安装'}
               </div>
 
               {engine?.phase === 'installing' && engine.progress != null && (
@@ -984,6 +988,12 @@ export default function App() {
 
               {!engine?.installed && engine?.phase !== 'installing' && (
                 <>
+                  {engine?.online && (
+                    <div style={{ fontSize: 10, color: '#0F6E56', lineHeight: 1.6, marginBottom: 8 }}>
+                      检测到 {(engine.url || '').replace(/^https?:\/\//, '')} 上已经有一个引擎在跑，可以直接用。
+                      下面这一条是把它换成 FREEART 托管的内置版本。
+                    </div>
+                  )}
                   <div style={{ fontSize: 10, color: '#5F5E5A', lineHeight: 1.6, marginBottom: 8 }}>
                     装上之后：草图成图、以图生图、涂掉重画、随心改，全部跑你自己的显卡，不排队也不花钱。
                     不装也能用——云端生图和本地 27 种改图照常。
@@ -1119,6 +1129,7 @@ export default function App() {
                     placeholder="或直接说：暖一点、扩成横版…"
                     style={{ ...inputStyle, marginBottom: 8 }}
                   />
+                  {!cloud && (<>
                   <div style={{ borderTop: '1px solid #E3E1D9', margin: '10px 0', paddingTop: 9 }}>
                     <div style={{ fontWeight: 500, color: '#444441', marginBottom: 7 }}>✨ 随心改（AI 自动搭工作流）</div>
                     <div style={{ fontSize: 10, color: '#A8A79E', marginBottom: 6, lineHeight: 1.5 }}>
@@ -1213,6 +1224,13 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                  </>)}
+                  {cloud && (
+                    <div style={{ borderTop: '1px solid #E3E1D9', margin: '10px 0', paddingTop: 9, fontSize: 10, color: '#A8A79E', lineHeight: 1.6 }}>
+                      以图生图、局部重绘、随心改 都要跑本地显卡，云端版本没有显卡，这些入口就不显示了。
+                      把项目装到自己电脑上就能用全套能力。
+                    </div>
+                  )}
                   <div onClick={() => removeBg(selected)} style={btnStyle('#E1F5EE', '#0F6E56')}>一键去背景（本地模型）</div>
                   <div onClick={() => regenerate(selected)} style={btnStyle('#EEEDFE', '#534AB7')}>再生成一张变体</div>
                   <div onClick={async () => {

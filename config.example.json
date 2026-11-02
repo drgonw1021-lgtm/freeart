@@ -13,5 +13,8 @@
   "COMFY_ARGS": [],
 
   "_ENGINE_AUTOSTART说明": "服务启动时自动拉起本地引擎",
-  "ENGINE_AUTOSTART": true
+  "ENGINE_AUTOSTART": true,
+
+  "_CLOUD说明": "云端部署设 true：没有显卡，引擎接口改成只读，前端自动隐藏依赖引擎的入口",
+  "CLOUD": false
 }
